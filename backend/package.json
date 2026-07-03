@@ -4,7 +4,7 @@
   "description": "CareConnect Healthcare Appointment Manager Backend",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node start",
     "dev": "nodemon src/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
