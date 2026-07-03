@@ -1,0 +1,8 @@
+{
+  "name": "careconnect-root",
+  "version": "1.0.0",
+  "scripts": {
+    "install": "npm install --prefix core/frontend",
+    "build": "npm run build --prefix core/frontend"
+  }
+}
