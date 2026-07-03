@@ -5,8 +5,7 @@ import {
   Trash2, Edit, ChevronRight, Settings, Pill, Activity, Info
 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:5000/api';
-
+const API_BASE = 'https://careconnect-backend-9jvh.onrender.com/api';
 export default function App() {
   // Authentication State
   const [token, setToken] = useState(localStorage.getItem('token') || '');
