@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom styles for accessibility zoom modes */
+.text-zoom-normal {
+  font-size: 16px;
+}
+.text-zoom-large {
+  font-size: 19px;
+}
+.text-zoom-xlarge {
+  font-size: 22px;
+}
+
+/* Accessibility overrides for patient facing text (minimum 18px zoom) */
+.patient-text-normal {
+  font-size: 18px;
+}
+.patient-text-large {
+  font-size: 21px;
+}
+.patient-text-xlarge {
+  font-size: 24px;
+}
+
+/* Custom premium styling */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.gradient-bg {
+  background: radial-gradient(circle at 10% 20%, rgba(240, 247, 255, 1) 0%, rgba(250, 251, 253, 1) 90%);
+}

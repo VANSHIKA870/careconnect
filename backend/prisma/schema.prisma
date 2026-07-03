@@ -1,0 +1,133 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+model User {
+  id                 Int             @id @default(autoincrement())
+  email              String          @unique
+  passwordHash       String
+  role               Role
+  fullName           String
+  phone              String
+  googleAccessToken  String?
+  googleRefreshToken String?
+  patientProfile     PatientProfile?
+  doctorProfile      DoctorProfile?
+}
+
+model PatientProfile {
+  userId               Int                  @id
+  dateOfBirth          DateTime
+  emergencyContact     String
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments         Appointment[]
+  slotHolds            SlotHold[]
+  medicationReminders  MedicationReminder[]
+}
+
+model DoctorProfile {
+  userId          Int           @id
+  specialisation  String
+  slotDurationMin Int           @default(30)
+  bio             String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workingHours    WorkingHour[]
+  leaveDays       LeaveDay[]
+  appointments    Appointment[]
+  slotHolds       SlotHold[]
+}
+
+model WorkingHour {
+  id        Int           @id @default(autoincrement())
+  doctorId  Int
+  dayOfWeek Int // 0 (Sunday) to 6 (Saturday)
+  startTime String // "HH:MM" e.g., "09:00"
+  endTime   String // "HH:MM" e.g., "17:00"
+  doctor    DoctorProfile @relation(fields: [doctorId], references: [userId], onDelete: Cascade)
+}
+
+model LeaveDay {
+  id       Int           @id @default(autoincrement())
+  doctorId Int
+  date     DateTime // Date only (normalised to midnight UTC)
+  doctor   DoctorProfile @relation(fields: [doctorId], references: [userId], onDelete: Cascade)
+
+  @@unique([doctorId, date])
+}
+
+model Appointment {
+  id                     Int                  @id @default(autoincrement())
+  patientId              Int
+  doctorId               Int
+  slotStart              DateTime
+  slotEnd                DateTime
+  status                 String // PENDING, CONFIRMED, RESCHED_NEEDED, COMPLETED, CANCELLED
+  symptomText            String
+  symptomUrgency         String // Low, Medium, High
+  symptomSummary         String? // Claude output chiefComplaint/questions
+  symptomLLMFailed       Boolean              @default(false)
+  doctorNotes            String?
+  prescription           String?
+  postVisitSummary       String? // Claude output patient-friendly
+  postVisitLLMFailed     Boolean              @default(false)
+  patientCalendarEventId String?
+  doctorCalendarEventId  String?
+  patient                PatientProfile       @relation(fields: [patientId], references: [userId], onDelete: Cascade)
+  doctor                 DoctorProfile        @relation(fields: [doctorId], references: [userId], onDelete: Cascade)
+  medicationReminders    MedicationReminder[]
+  emailJobs              EmailJob[]
+
+  @@unique([doctorId, slotStart])
+}
+
+model SlotHold {
+  id        Int            @id @default(autoincrement())
+  doctorId  Int
+  slotStart DateTime
+  patientId Int
+  expiresAt DateTime
+  doctor    DoctorProfile  @relation(fields: [doctorId], references: [userId], onDelete: Cascade)
+  patient   PatientProfile @relation(fields: [patientId], references: [userId], onDelete: Cascade)
+
+  @@unique([doctorId, slotStart])
+}
+
+model MedicationReminder {
+  id              Int            @id @default(autoincrement())
+  appointmentId   Int
+  patientId       Int
+  medicationName  String
+  dosage          String
+  frequencyPerDay Int
+  durationDays    Int
+  startDate       DateTime
+  nextReminderAt  DateTime
+  active          Boolean        @default(true)
+  appointment     Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient         PatientProfile @relation(fields: [patientId], references: [userId], onDelete: Cascade)
+}
+
+model EmailJob {
+  id            Int          @id @default(autoincrement())
+  appointmentId Int?
+  toEmail       String
+  type          String // BOOKING_CONFIRMATION, REMINDER_24H, CANCELLATION, LEAVE_CONFLICT, MEDICATION_REMINDER
+  subject       String
+  bodyHtml      String
+  status        String // PENDING, SENT, FAILED, ABANDONED
+  attempts      Int          @default(0)
+  maxAttempts   Int          @default(5)
+  nextAttemptAt DateTime
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+}
